@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>devstack-cb-io</groupId>
+  <artifactId>devstack-cb-io</artifactId>
+  <version>2.1.3.000</version>
+  <versioning>
+    <versions>
+      <version>2.1.3.000</version>
+    </versions>
+    <lastUpdated>20150922125954</lastUpdated>
+  </versioning>
+</metadata>
