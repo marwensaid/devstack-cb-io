@@ -12,7 +12,7 @@ import javax.inject.Named;
  * application data for web will try to read from META-INF/config.properties
  * should have by default following defined : appName=yourApplicationName
  * couchbaseIps=couchbaseIps [ comma-delimited ] dbn=mainBucketName
- * dbp=mainBucketPass
+ * dbp=mainBucketPass 
  *
  * @author devstackio
  */
