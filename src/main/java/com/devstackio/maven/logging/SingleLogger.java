@@ -45,7 +45,7 @@ public class SingleLogger {
 		try {
 			String filename = this.getFileName();
 			this.logger = Logger.getLogger(filename);
-			fa = new FileAppender(new SimpleLayout(), "../logs/" + filename + ".log");
+			fa = new FileAppender(new SimpleLayout(), "/opt/wildfly/logs/" + filename + ".log");
 			logger.addAppender(fa);
 			fa.setLayout(new SimpleLayout());
 		} catch (Exception e) {

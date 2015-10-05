@@ -28,6 +28,7 @@ public class TestCbDao {
     private final static UuidGenerator uuidGenerator = new UuidGenerator();
     private final static IoLogger ioLogger = new IoLogger();
     private final static String docPrefix = "ContractEntity";
+    private final static String testCounter = "test7488488";
 
     @BeforeClass
     public static void setUpClass() {
@@ -41,6 +42,9 @@ public class TestCbDao {
             cbDao.createConnection(couchbaseIps);
             cbDao.addBucketToCluster(demoBucketName, demoBucketPass);
             bucket = cbDao.getBucket(demoBucketName);
+            
+            //initialize test counter if does not exist
+            cbDao.getCounter(bucket, docPrefix);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -72,6 +76,9 @@ public class TestCbDao {
             bucket.close();
             cbDao.destroyConnection(demoBucketName);
             cbDao.closeClusterConnection();
+            
+            System.out.println("removing test generated counter");
+            bucket.async().remove(testCounter);
 
         } catch (Exception e) {
             System.out.println("exception caught on line 71....");
@@ -135,6 +142,7 @@ public class TestCbDao {
     @Test
     public void testCreateAndRead() {
 
+        System.out.println("-- [TEST] testCreateAndRead() --");
         ContractEntity entityResult = new ContractEntity();
         String prefixCheck = entityResult.getPrefix();
         String docId = "";
@@ -161,6 +169,8 @@ public class TestCbDao {
     @Test
     public void testCreateAndReadSession() {
         
+        System.out.println("-- [TEST] testCreateAndReadSession() --");
+        
         ContractEntity entityResult = new ContractEntity();
         String docId = "";
         String contract = "default";
@@ -179,6 +189,22 @@ public class TestCbDao {
         assertEquals("contract '" + contract + "' saved into new couchbase document", contract, entityResult.getContract());
         assertEquals("prefix '" + prefixCheck + "' saved into new couchbase document", prefixCheck, entityResult.getPrefix());
     }
+    
+    @Test
+    public void testCbCounter() {
+        
+        try {
+            
+            int c = cbDao.getCounter( bucket, testCounter );
+            assertEquals( "counter should be created if does not exist and return 0", c, 0);
+            
+            int b = cbDao.getCounter( bucket, testCounter );
+            assertEquals( "counter should increment by 1 in subsequent requests", b, 1);
+            
+        } catch( Exception e ) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * reading a document that does not already exist in couchbase should
@@ -186,6 +212,8 @@ public class TestCbDao {
      */
     @Test
     public void testEmptyReadFromSession() {
+        
+        System.out.println("-- [TEST] testEmptyReadFromSession() --");
 
         ContractEntity entityResult = new ContractEntity();
         String docId = "";
@@ -211,6 +239,8 @@ public class TestCbDao {
      */
     @Test
     public void testUpdate() {
+        
+        System.out.println("-- [TEST] testUpdate() --");
 
         System.out.println("testing update method...");
         ContractEntity entity = new ContractEntity();
@@ -246,6 +276,8 @@ public class TestCbDao {
 	//Test delete method of EntityCbDao (abstract super class)
     @Test
     public void testDelete() {
+        
+        System.out.println("-- [TEST] testDelete() --");
 
         ContractEntity entity = new ContractEntity();
         String contract = "default";
@@ -272,6 +304,34 @@ public class TestCbDao {
         }
 
         assertEquals("added and removed docId '" + docId, null, entity);
+
+    }
+    
+    @Test
+    public void testDocExistMethod() {
+        
+        System.out.println("-- [TEST] testDocExistMethod() --");
+
+        ContractEntity entity = new ContractEntity();
+        String contract = "default";
+        String docId = "";
+        boolean test0 = false;
+        boolean test1 = false;
+
+        try {
+            docId = this.createMockContractEntity(contract, false, false);
+            System.out.println("created docid : " + docId);
+            entity = cbDao.read(docId, entity);
+            test0 = cbDao.docExists( docId, entity );
+            cbDao.delete(docId, entity);
+            test1 = cbDao.docExists( docId, entity );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        assertEquals("docExists correctly after adding to cb '" + docId, test0, true);
+        assertEquals("docExists false after removing from cb and rechecking '" + docId, test1, false);
 
     }
 

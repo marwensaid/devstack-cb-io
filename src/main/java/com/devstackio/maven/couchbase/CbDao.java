@@ -5,8 +5,10 @@ import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.PersistTo;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.JsonLongDocument;
+import com.couchbase.client.java.document.LegacyDocument;
 import com.couchbase.client.java.document.RawJsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.error.DocumentAlreadyExistsException;
 import com.couchbase.client.java.error.DocumentDoesNotExistException;
 import com.couchbase.client.java.view.Stale;
 import com.couchbase.client.java.view.ViewQuery;
@@ -24,7 +26,7 @@ import javax.inject.Inject;
 import org.apache.log4j.Level;
 
 /**
- * if entity Dao is going to couchbase : extend this has main methods needed to
+ * if entity Dao is going to couchbase : extend this : has main methods needed to
  * store and read documents into couchbase using java client 2.1.3 for couchbase
  * 3 make sure to add @Named and @ApplicationScoped on sub classes
  *
@@ -92,16 +94,27 @@ public class CbDao extends CbConnectionManager implements IDao {
 
         try {
             prefix = entity.getPrefix();
+            System.out.println( "cbdao - create -- prefix is : " + prefix );
+            System.out.println("bucket is : " + bucket );
 
             String entid = entity.getId();
+            System.out.println( "entid is : " + entid );
+            
             if (entid == null || entid.isEmpty()) {
+                System.out.println("entid is null or empty... first chek");
                 String entityId = this.generateId(bucket, prefix);
+                System.out.println( "entid was null or empty ... new generated id is : " + entityId );
                 entity.setId(entityId);
             }
-
+            
+            System.out.println("getDocId is : " + entity.getDocId() );
+            
             RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
+            System.out.println( "rawJason doc is : " + rJsonDoc );
             returnobj = prefix + ":" + entity.getId();
-
+            System.out.println( "returnobj is : " + returnobj );
+            
+            System.out.println( "bucket is : " + bucket );
             bucket.insert(rJsonDoc, PersistTo.MASTER);
             String logMsg = "-- tried upsert on : " + rJsonDoc + " --";
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
@@ -198,20 +211,27 @@ public class CbDao extends CbConnectionManager implements IDao {
         String entityJson = "";
         try {
             DefaultEntity entity = (DefaultEntity) t;
+            String uuid = this.appData.getUuid();
             docId = entity.getPrefix() + ":" + this.appData.getUuid();
             Bucket bucket = this.getBucket(entity.getBucket());
             String logMsg = "trying readFromSession using docid : " + docId + " bucket is : " + bucket;
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
-            entity.setId(docId);
+            entity.setId( uuid );
             JsonDocument jd = bucket.get(docId);
 
             entityJson = jd.content().toString();
             returnobj = (T) this.gson.fromJson(entityJson, t.getClass());
 
+        } catch (DocumentAlreadyExistsException e ) {
+            
+            System.out.println("DocumentAlreadyExists caught on cbDao.readFromSession -- ");
+            
         } catch (NullPointerException e) {
             String generatedId = this.create((DefaultEntity) returnobj);
+            System.out.println("generatedId is : " + generatedId );
             returnobj = this.read(generatedId, returnobj);
         } catch (Exception e) {
+            System.out.println("Exception being thrown from CbDao");
             e.printStackTrace();
         }
         return returnobj;
@@ -330,6 +350,49 @@ public class CbDao extends CbConnectionManager implements IDao {
         return returnobj;
 
     }
+    
+    /**
+     * used in place of bucket.counter method - the bucket.counter method does not create a new document
+     * if none exists - bug
+     * @todo this should be thread safe, for now just writing it as is
+     * @param bucket
+     * @param prefix
+     * @return 
+     */
+    protected int getCounter( Bucket bucket, String prefix ) {
+        
+        int returnobj = -1;
+        Bucket cbBucket = bucket;
+        
+        try {
+            
+            System.out.println( "trying get on prefix : " + prefix );
+            JsonDocument jsonDoc = cbBucket.get( prefix );
+            System.out.println("jsonDoc is : " + jsonDoc );
+            
+            if( jsonDoc == null ) {
+                
+                JsonObject content = JsonObject.empty().put("value", 0);
+                JsonDocument doc = JsonDocument.create( prefix, content );
+                JsonDocument inserted = bucket.insert( doc );
+                returnobj = 0;
+                
+            } else {
+                int current = jsonDoc.content().getInt( "value" );
+                current+=1;
+                JsonObject content = JsonObject.empty().put("value", current);
+                JsonDocument doc = JsonDocument.create( prefix, content );
+                JsonDocument inserted = bucket.replace( doc );
+                returnobj = current;
+            }
+            
+        } catch ( Exception e) {
+            e.printStackTrace();
+        }
+        
+        return returnobj;
+        
+    }
 
     /**
      * increments entity prefix counter on couchbase
@@ -339,13 +402,13 @@ public class CbDao extends CbConnectionManager implements IDao {
     protected String generateId(Bucket bucket, String prefix) {
 
         String returnobj = "";
-        Bucket cbBucket = bucket;
 
         try {
-            JsonLongDocument jsonLongDoc = cbBucket.counter(prefix, 1);
-            Long idLong = jsonLongDoc.content();
-            returnobj = Long.toString(idLong);
-
+            
+            returnobj = Integer.toString( this.getCounter(bucket, prefix) );
+            
+        } catch (DocumentDoesNotExistException e) {
+            System.out.println("DocDoesNotExist caught... creating new prefix document for counter");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -403,6 +466,25 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
 
         return returnobj;
+    }
+    
+    public boolean docExists( String docid, DefaultEntity entityobj ) {
+        
+        boolean returnobj = false;
+        
+        try {
+            
+            DefaultEntity entity = entityobj;
+            Bucket bucket = this.getBucket(entity.getBucket());
+            JsonDocument jd = bucket.get( docid );
+            returnobj = jd != null;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return returnobj;
+        
     }
 
 }
