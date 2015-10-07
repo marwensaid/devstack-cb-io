@@ -4,8 +4,6 @@ import com.devstackio.maven.databaseshared.IDao;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.PersistTo;
 import com.couchbase.client.java.document.JsonDocument;
-import com.couchbase.client.java.document.JsonLongDocument;
-import com.couchbase.client.java.document.LegacyDocument;
 import com.couchbase.client.java.document.RawJsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.error.DocumentAlreadyExistsException;
@@ -144,16 +142,16 @@ public class CbDao extends CbConnectionManager implements IDao {
 
         try {
 
-            System.out.println("creating session entity! : " + entity.getId());
+            System.out.println("[ CbDao ] : createToSession : " + entity.getId() + " : from " + this.getClass().getCanonicalName());
             
             JsonDocument found = bucket.get( entity.getDocId() );
             if (found == null) {
                 // doc not found
-                System.out.println("doc not found call...");
+                System.out.println("  -- document does not exist, creating new entity --");
                 returnobj = this.create(entity);
             } else {
                 // doc found
-                System.out.println("doc found - calling update -----");
+                System.out.println("  -- document exists already, updating entity --");
                 this.update(entity);
                 returnobj = entity.getId();
             }
@@ -255,8 +253,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
 
             bucket.replace(rJsonDoc, PersistTo.MASTER);
-            String logMsg = "-- tried replace on : " + rJsonDoc + " --";
-            this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
+//            this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
 
         } catch (DocumentDoesNotExistException e) {
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");

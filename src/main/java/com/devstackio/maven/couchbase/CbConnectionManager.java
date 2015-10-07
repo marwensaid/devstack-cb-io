@@ -100,7 +100,13 @@ public class CbConnectionManager {
     }
 
     public void closeClusterConnection() {
-        this.cluster.disconnect();
+        try {
+            if( this.cluster != null ) {
+                this.cluster.disconnect();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public Bucket getBucket(String bucketname) {
@@ -108,12 +114,7 @@ public class CbConnectionManager {
         Bucket returnobj = null;
 
         try {
-            System.out.println("getting bucketname : " + bucketname);
-            System.out.println("from list of buckets : ");
-
-            for (String e : this.getBuckets().keySet()) {
-                System.out.println("bucket found : " + e);
-            }
+            //System.out.println("[ CbConnectionManager ] : getting bucketname : " + bucketname);
             returnobj = this.getBuckets().get(bucketname);
         } catch (Exception e) {
             e.printStackTrace();
@@ -126,10 +127,18 @@ public class CbConnectionManager {
      * should be called from contextDestroyed [ ServletContextListener ]
      */
     public void destroyConnection(String bucketname) {
+        System.out.println("test0");
         try {
             //this.ioLogger.logTo(this.LOGFILE, Level.INFO, "destroyingConnection to : " + bucketname );
-            this.getBuckets().get(bucketname).close();
-            
+            if( this.getBuckets() == null ) {
+            } else {
+                if( this.getBuckets().get(bucketname) == null ) {
+                    
+                } else {
+                    this.getBuckets().get(bucketname).close();
+                }
+            }
+
         } catch (Exception e) {
             //this.ioLogger.logTo(this.LOGFILE, Level.ERROR, "destroyingConnection to : " + bucketname + " : error : " + e.getMessage());
             e.printStackTrace();
