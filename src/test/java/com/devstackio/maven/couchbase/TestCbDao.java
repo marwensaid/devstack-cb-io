@@ -1,6 +1,7 @@
 package com.devstackio.maven.couchbase;
 
 import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.error.DocumentDoesNotExistException;
 import com.devstackio.maven.logging.IoLogger;
 import com.devstackio.maven.uuid.UuidGenerator;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class TestCbDao {
     private static CbDao cbDao;
     private static Bucket bucket;
     private static ArrayList<String> testDocIds;
+    private static boolean testCounterCreated = false;
     private final static String[] couchbaseIps = {"127.0.0.1"};
     private final static String demoBucketName = "default";
     private final static String demoBucketPass = "";
@@ -73,15 +75,18 @@ public class TestCbDao {
             }
             System.out.println("removing counter for : " + docPrefix);
             bucket.remove(docPrefix);
-            System.out.println("removing test generated counter");
-            bucket.remove(testCounter);
+            
+            if( testCounterCreated ) {
+                System.out.println("removing test generated counter");
+                bucket.remove(testCounter);
+            }
             
             bucket.close();
             cbDao.destroyConnection(demoBucketName);
             cbDao.closeClusterConnection();
 
         } catch (Exception e) {
-            System.out.println("exception caught on line 71....");
+            System.out.println("exception caught in tearDownClass method....");
             e.printStackTrace();
         }
     }
@@ -104,8 +109,10 @@ public class TestCbDao {
 
     /**
      * creates new ContractEntity document to couchbase
-     *
-     * @return docId of entity created on couchbase
+     * @param contract send 'default' for tests
+     * @param tosession whether or not to save doc to session ( appends a UUID that would be stored browser cookie )
+     * @param deleteAfter whether or not to delete this document after use ( for tests )
+     * @return 
      */
     private String createMockContractEntity(String contract, boolean tosession, boolean deleteAfter) {
 
@@ -134,6 +141,34 @@ public class TestCbDao {
 
         return returnobj;
     }
+    
+    /**
+     * test CbDao createDefaultCouchbaseView method - should create :
+     *    design doc : entity's class name
+     *    view name  : getAll
+     */
+    @Test
+    public void testCreateDefaultCouchbaseView() {
+        
+        CbViews cbViews = new CbViews();
+        ContractEntity entity = new ContractEntity();
+        cbDao.createCouchbaseDefaultView( entity );
+        
+        String doc0 = this.createMockContractEntity("default", false, true);
+        String doc1 = this.createMockContractEntity("default", false, true);
+        String doc2 = this.createMockContractEntity("default", false, true);
+        
+        ArrayList<ContractEntity> results = cbDao.getAll( entity );
+        int resultSize = results.size();
+        
+        System.out.println("result size from getAll method should be 3... was : " + resultSize );
+        
+        System.out.println("removing design document " + entity.getPrefix() + " from couchbase");
+        cbViews.removeDesignDoc( bucket, entity.getPrefix() );
+        
+        assertEquals("defaultCouchbaseView successfully Created - getAll method success", resultSize, 3);
+        
+    }   
 
     /**
      * Test create and read methods of EntityCbDao (abstract super class) tests
@@ -192,6 +227,8 @@ public class TestCbDao {
     
     @Test
     public void testCbCounter() {
+        
+        testCounterCreated = true;
         
         try {
             

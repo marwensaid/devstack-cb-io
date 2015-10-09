@@ -210,7 +210,9 @@ public class CbDao extends CbConnectionManager implements IDao {
             for (int i = 0; i < jsonDocs.size(); i++) {
                 JsonDocument jd = jsonDocs.get(i);
                 T ent = this.read(jd.id(), t);
-                if( !entity.getId().contains("-") ) {
+                DefaultEntity de = (DefaultEntity) ent;
+                String entId = de.getId();
+                if( !entId.contains("-") ) {
                     returnobj.add( ent );
                 }
                 

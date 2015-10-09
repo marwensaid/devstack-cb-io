@@ -17,32 +17,43 @@ import javax.enterprise.context.RequestScoped;
  */
 @RequestScoped
 public class CbViews {
-	
-	public void addDesignDoc( Bucket bucket, String designDocName, HashMap<String, String> viewToMapFunctions) {
-		try {
-			
-			List<View> viewList = new ArrayList();
-			HashMap<String, String> views = viewToMapFunctions;
-			Iterator it = views.entrySet().iterator();
-			
-			while (it.hasNext()) {
-				Map.Entry pairs = (Map.Entry) it.next();
-				System.out.println("------------------------------");
-				System.out.println(pairs.getKey().toString());
-				System.out.println(pairs.getValue().toString());
-				View vd = DefaultView.create(pairs.getKey().toString(), pairs.getValue().toString());
-				viewList.add(vd);
-				it.remove();
-			}
-			
-			DesignDocument designDoc = DesignDocument.create( designDocName,viewList );
-			
-			bucket.bucketManager().upsertDesignDocument( designDoc );
-			
-		} catch (Exception e) {
-			System.err.println("[ CBViews ] Error : " + e.getMessage());
-			e.printStackTrace();
-		}
-	}
-	
+
+    public void addDesignDoc(Bucket bucket, String designDocName, HashMap<String, String> viewToMapFunctions) {
+        try {
+
+            List<View> viewList = new ArrayList();
+            HashMap<String, String> views = viewToMapFunctions;
+            Iterator it = views.entrySet().iterator();
+
+            while (it.hasNext()) {
+                Map.Entry pairs = (Map.Entry) it.next();
+                System.out.println("------------------------------");
+                System.out.println(pairs.getKey().toString());
+                System.out.println(pairs.getValue().toString());
+                View vd = DefaultView.create(pairs.getKey().toString(), pairs.getValue().toString());
+                viewList.add(vd);
+                it.remove();
+            }
+
+            DesignDocument designDoc = DesignDocument.create(designDocName, viewList);
+
+            bucket.bucketManager().upsertDesignDocument(designDoc);
+
+        } catch (Exception e) {
+            System.err.println("[ CBViews ] Error : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    public void removeDesignDoc( Bucket bucket, String designDoc ) {
+        
+        try {
+            
+            bucket.bucketManager().removeDesignDocument(designDoc);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
