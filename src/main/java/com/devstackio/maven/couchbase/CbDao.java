@@ -18,6 +18,7 @@ import com.devstackio.maven.entity.DefaultEntity;
 import com.devstackio.maven.logging.IoLogger;
 import com.devstackio.maven.uuid.UuidGenerator;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -39,6 +40,7 @@ public class CbDao extends CbConnectionManager implements IDao {
     protected UuidGenerator uuidGenerator;
     protected IoLogger ioLogger;
     protected AppData appData;
+    protected CbViews cbViews = new CbViews();
 
     @Inject
     public void setAppData(AppData appdata) {
@@ -193,6 +195,66 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
 
         return returnobj;
+    }
+    
+    public <T>ArrayList getAll( T t ) {
+        
+        ArrayList<T> returnobj = new ArrayList();
+        DefaultEntity entity = (DefaultEntity) t;
+        Bucket bucket = this.getBucket( entity.getBucket() );
+        
+        try {
+            
+            ArrayList<JsonDocument> jsonDocs = this.getBulkData( bucket, entity.getPrefix(), "getAll" );
+            
+            for (int i = 0; i < jsonDocs.size(); i++) {
+                JsonDocument jd = jsonDocs.get(i);
+                T ent = this.read(jd.id(), t);
+                if( !entity.getId().contains("-") ) {
+                    returnobj.add( ent );
+                }
+                
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return returnobj;
+        
+    }
+    
+    /**
+     * creates a default couchbase view for returning all entity objects from db
+     * design doc mapped to entity.prefix ( class name )
+     * view name mapped to 'getAll'
+     * @param <T>
+     * @param t DefaultEntity to create view for
+     */
+    public <T>void createCouchbaseDefaultView( T t ) {
+        
+        DefaultEntity entity = (DefaultEntity) t;
+        String prefix = entity.getPrefix();
+        
+        try {
+            
+            String entityView = "function (doc, meta) {\n"
+                    + "  if(doc.prefix == '" + prefix + "') {\n"
+                    + "    emit(meta.id);\n"
+                    + "  }\n"
+                    + "}";
+            
+            HashMap<String, String> mapActionEvent = new HashMap();
+            mapActionEvent.put( "getAll", entityView );
+            
+            Bucket bucket = this.getBucket( entity.getBucket() );
+
+            this.cbViews.addDesignDoc( bucket, prefix, mapActionEvent );
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
     }
 
     /**

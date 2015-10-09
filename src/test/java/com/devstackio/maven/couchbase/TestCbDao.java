@@ -66,19 +66,19 @@ public class TestCbDao {
 
         try {
             System.out.println("-- removing test documents created from couchbase --");
-            String prefix="";
+
             for (int i = 0; i < testDocIds.size(); i++) {
                 System.out.println("removing : " + testDocIds.get(i).toString());
                 bucket.remove(testDocIds.get(i));
             }
             System.out.println("removing counter for : " + docPrefix);
             bucket.remove(docPrefix);
+            System.out.println("removing test generated counter");
+            bucket.remove(testCounter);
+            
             bucket.close();
             cbDao.destroyConnection(demoBucketName);
             cbDao.closeClusterConnection();
-            
-            System.out.println("removing test generated counter");
-            bucket.async().remove(testCounter);
 
         } catch (Exception e) {
             System.out.println("exception caught on line 71....");

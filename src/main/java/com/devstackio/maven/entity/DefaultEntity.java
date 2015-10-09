@@ -1,5 +1,6 @@
 package com.devstackio.maven.entity;
 
+import com.devstackio.maven.couchbase.CbViews;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -7,6 +8,9 @@ import java.util.Date;
 
 /**
  * when extending, define this.bucket in constructor
+ * would suggest a Constants singleton and set the bucket on appinit after reading our bucket data
+ * this way we can create an AppDefaultEntity that will set this.bucket to AppConstants.getMainBucket();
+ * have AppDefaultEntity extend DefaultEntity and all your CB Entity objects extend AppDefaultEntity and call super() in constructor
  *
  * @author devstackio
  */
