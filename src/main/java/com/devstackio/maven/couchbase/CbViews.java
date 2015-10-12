@@ -21,15 +21,16 @@ public class CbViews {
     public void addDesignDoc(Bucket bucket, String designDocName, HashMap<String, String> viewToMapFunctions) {
         try {
 
+            System.out.println("  -- [ creating designDoc view : [" + designDocName + "]..." );
             List<View> viewList = new ArrayList();
             HashMap<String, String> views = viewToMapFunctions;
             Iterator it = views.entrySet().iterator();
 
             while (it.hasNext()) {
                 Map.Entry pairs = (Map.Entry) it.next();
-                System.out.println("------------------------------");
-                System.out.println(pairs.getKey().toString());
-                System.out.println(pairs.getValue().toString());
+//                System.out.println("------------------------------");
+//                System.out.println(pairs.getKey().toString());
+//                System.out.println(pairs.getValue().toString());
                 View vd = DefaultView.create(pairs.getKey().toString(), pairs.getValue().toString());
                 viewList.add(vd);
                 it.remove();
@@ -38,6 +39,8 @@ public class CbViews {
             DesignDocument designDoc = DesignDocument.create(designDocName, viewList);
 
             bucket.bucketManager().upsertDesignDocument(designDoc);
+            
+            System.out.println("     -- designDoc created successfully ]");
 
         } catch (Exception e) {
             System.err.println("[ CBViews ] Error : " + e.getMessage());
