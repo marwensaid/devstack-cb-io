@@ -1,7 +1,7 @@
 package com.devstackio.maven.couchbase;
 
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.error.DocumentDoesNotExistException;
+import com.couchbase.client.java.error.CASMismatchException;
 import com.devstackio.maven.logging.IoLogger;
 import com.devstackio.maven.uuid.UuidGenerator;
 import java.util.ArrayList;
@@ -168,7 +168,64 @@ public class TestCbDao {
         
         assertEquals("defaultCouchbaseView successfully Created - getAll method success", resultSize, 3);
         
-    }   
+    }
+    
+    /**
+     * make sure documents retrieved via readAndLock cant be updated during lockout time
+     * make sure documents can be unlocked using JsonDocument's cas value
+     */
+    @Test
+    public void testReadAndLock() {
+        
+        String docId="";
+        ContractEntity entityResult = new ContractEntity();
+        ContractEntity entityTry = new ContractEntity();
+        String contract = "default";
+        String contractUpdate = "newContract";
+        int lockTime = 3;
+        Bucket bucket = cbDao.getBucket( entityResult.getBucket() );
+        
+        try {
+            
+            docId = this.createMockContractEntity( contract, false, true );
+            long casTestOne = 3;
+            
+            entityTry = cbDao.readAndLock( docId, entityTry, lockTime );
+            entityTry.setContract( contractUpdate );
+            cbDao.update(entityTry);
+            ContractEntity readCheck = cbDao.read( docId, new ContractEntity() );
+            assertEquals("should not allow any document writes immediately after a readAndLock", readCheck.getContract(), contract );
+            System.out.println("waiting 5 seconds before trying to set again...");
+            Thread.sleep(5000);
+            cbDao.update(entityTry);
+            ContractEntity anotherRead = cbDao.read( docId, new ContractEntity() );
+            
+            assertEquals("should allow document writes after wait time as expired", anotherRead.getContract(), contractUpdate );
+            
+            System.out.println("waiting 1 second before trying to update on same document with it's own CAS value...");
+            Thread.sleep(1000);
+            
+            long realCas = bucket.getAndLock(docId, 10).cas();
+            boolean testUnlock = bucket.unlock( docId, realCas);
+            System.out.println("-- testUnlock is : " + testUnlock );
+            if ( testUnlock ) {
+                anotherRead.setContract("testUnlock!");
+                cbDao.update( anotherRead );
+            }
+            
+            String contractCheck = cbDao.read(docId, new ContractEntity() ).getContract();
+            System.out.println("contractCheck final is : " + contractCheck) ;
+            
+            assertEquals("should be able to update document with it's own CAS value after running .unlock",contractCheck,"testUnlock!");
+            
+        } catch (CASMismatchException e) {
+            System.out.println("CAS Mismatch caught...");
+        } catch (Exception e) {
+            System.out.println("exception type : " + e.getCause().toString() + " caught in Exception block");
+            e.printStackTrace();
+        }
+
+    }
 
     /**
      * Test create and read methods of EntityCbDao (abstract super class) tests

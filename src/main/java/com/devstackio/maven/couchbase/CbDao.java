@@ -5,7 +5,9 @@ import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.PersistTo;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.RawJsonDocument;
+import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.error.CASMismatchException;
 import com.couchbase.client.java.error.DocumentAlreadyExistsException;
 import com.couchbase.client.java.error.DocumentDoesNotExistException;
 import com.couchbase.client.java.view.Stale;
@@ -20,6 +22,7 @@ import com.devstackio.maven.uuid.UuidGenerator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import org.apache.log4j.Level;
@@ -91,6 +94,45 @@ public class CbDao extends CbConnectionManager implements IDao {
         String prefix = "";
         DefaultEntity entity = entityobj;
         Bucket bucket = this.getBucket(entity.getBucket());
+
+        try {
+            prefix = entity.getPrefix();
+            System.out.println( "cbdao - create -- prefix is : " + prefix );
+            System.out.println("bucket is : " + bucket );
+
+            String entid = entity.getId();
+            System.out.println( "entid is : " + entid );
+            
+            if (entid == null || entid.isEmpty()) {
+                System.out.println("entid is null or empty... first chek");
+                String entityId = this.generateId(bucket, prefix);
+                System.out.println( "entid was null or empty ... new generated id is : " + entityId );
+                entity.setId(entityId);
+            }
+            
+            System.out.println("getDocId is : " + entity.getDocId() );
+            
+            RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
+            System.out.println( "rawJason doc is : " + rJsonDoc );
+            returnobj = prefix + ":" + entity.getId();
+            System.out.println( "returnobj is : " + returnobj );
+            
+            System.out.println( "bucket is : " + bucket );
+            bucket.insert(rJsonDoc, PersistTo.MASTER);
+            String logMsg = "-- tried upsert on : " + rJsonDoc + " --";
+            this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return returnobj;
+    }
+    
+    public String create(DefaultEntity entityobj, Bucket fullbucket) {
+
+        String returnobj = "";
+        String prefix = "";
+        DefaultEntity entity = entityobj;
+        Bucket bucket = fullbucket;
 
         try {
             prefix = entity.getPrefix();
@@ -195,6 +237,30 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
 
         return returnobj;
+    }
+    
+    public <T> T readAndLock( String id, T t, int locktime ) {
+        
+        T returnobj = null;
+        int lockTime = locktime;
+        DefaultEntity entity = (DefaultEntity) t;
+        Bucket bucket = this.getBucket(entity.getBucket());
+        
+        String docId = id;
+        String entityJson = "";
+        try {
+            JsonDocument jd = bucket.getAndLock( id, lockTime );
+            entityJson = jd.content().toString();
+            returnobj = (T) this.gson.fromJson( entityJson, t.getClass() );
+
+        } catch (NullPointerException e) {
+            this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return returnobj;
+        
     }
     
     public <T>ArrayList getAll( T t ) {
@@ -315,16 +381,41 @@ public class CbDao extends CbConnectionManager implements IDao {
             docId = entity.getPrefix() + ":" + entity.getId();
 
             RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
-
+            
             bucket.replace(rJsonDoc, PersistTo.MASTER);
 //            this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
 
+        } catch (CASMismatchException e) {
+            System.out.println("------------ CbDao update method ---------");
+            System.out.println("CASMismatch caught on updating : " + docId );
+            System.out.println("------------------------------------------");
         } catch (DocumentDoesNotExistException e) {
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+    
+    public void updateFromLock( DefaultEntity entityobj, long cas ) {
+        
+        DefaultEntity entity = entityobj;
+        Bucket bucket = this.getBucket(entity.getBucket());
+        String docId = "";
+        long casKey = cas;
+        
+        try {
+            docId = entity.getPrefix() + ":" + entity.getId();
+
+            RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
+            
+            bucket.unlock(docId, casKey);
+            bucket.replace(rJsonDoc, PersistTo.MASTER);
+            
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        
     }
 
     public void updateToSession(DefaultEntity entityobj) {
@@ -384,6 +475,11 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
         return returnobj;
 
+    }
+    
+    protected long getCasFromEntity( String docid, Object entityobj ) {
+        RawJsonDocument rJson = this.convertToRawJsonDoc(docid, entityobj);
+        return rJson.cas();
     }
 
     /**
