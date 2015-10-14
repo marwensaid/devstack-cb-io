@@ -1,9 +1,7 @@
 package com.devstackio.maven.entity;
 
-import com.devstackio.maven.couchbase.CbViews;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -28,18 +26,11 @@ public class DefaultEntity {
 
     private String getTime() {
         String returnobj="";
-        String dateStr = "Jul 27, 2011 8:35:29 AM";
-        DateFormat readFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa");
-        DateFormat writeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date date = null;
-        try {
-            date = readFormat.parse(dateStr);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        if (date != null) {
-            returnobj = writeFormat.format(date);
-        }
+        
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.hhmmss");
+        returnobj = sdf.format(date);
+        
         return returnobj;
     }
 

@@ -1,5 +1,6 @@
 package com.devstackio.maven.couchbase;
 
+import com.couchbase.client.java.AsyncBucket;
 import com.devstackio.maven.databaseshared.IDao;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.PersistTo;
@@ -127,12 +128,17 @@ public class CbDao extends CbConnectionManager implements IDao {
         return returnobj;
     }
     
-    public String create(DefaultEntity entityobj, Bucket fullbucket) {
+    /**
+     * uses AsyncBucket instead of regular bucket
+     * @param entityobj
+     * @return 
+     */
+    public String createAsync(DefaultEntity entityobj) {
 
         String returnobj = "";
         String prefix = "";
         DefaultEntity entity = entityobj;
-        Bucket bucket = fullbucket;
+        AsyncBucket bucket = this.getBucket(entity.getBucket()).async();
 
         try {
             prefix = entity.getPrefix();
@@ -144,7 +150,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             
             if (entid == null || entid.isEmpty()) {
                 System.out.println("entid is null or empty... first chek");
-                String entityId = this.generateId(bucket, prefix);
+                String entityId = this.generateId( this.getBucket(entity.getBucket()), prefix);
                 System.out.println( "entid was null or empty ... new generated id is : " + entityId );
                 entity.setId(entityId);
             }
@@ -236,6 +242,20 @@ public class CbDao extends CbConnectionManager implements IDao {
             e.printStackTrace();
         }
 
+        return returnobj;
+    }
+    
+    public <T> T convertFromJsonDocument( JsonDocument jd, T t ) {
+        
+        T returnobj = null;
+        try {
+            
+            String entityJson = jd.content().toString();
+            returnobj = (T) this.gson.fromJson( entityJson, t.getClass() );
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return returnobj;
     }
     
