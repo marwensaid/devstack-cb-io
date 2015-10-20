@@ -581,7 +581,7 @@ public class CbDao extends CbConnectionManager implements IDao {
         
     }
     
-    protected void setCounter( Bucket bucket, String prefix, int value ) {
+    public void setCounter( Bucket bucket, String prefix, int value ) {
         
         Bucket cbBucket = bucket;
         int newCounterValue = value;
