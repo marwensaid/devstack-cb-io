@@ -476,6 +476,16 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
 
     }
+    
+    public void rawDelete( String docid, Bucket bucket ) {
+        
+        try {
+            bucket.remove( docid, PersistTo.MASTER );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+    }
 
     /**
      * creates full JsonDocument required for inserting to couchbase
@@ -568,6 +578,27 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
         
         return returnobj;
+        
+    }
+    
+    protected void setCounter( Bucket bucket, String prefix, int value ) {
+        
+        Bucket cbBucket = bucket;
+        int newCounterValue = value;
+        
+        try {
+            
+            System.out.println( "trying get on prefix : " + prefix );
+            JsonDocument jsonDoc = cbBucket.get( prefix );
+            System.out.println("jsonDoc is : " + jsonDoc );
+            
+            JsonObject content = JsonObject.empty().put( "value", newCounterValue );
+            JsonDocument doc = JsonDocument.create( prefix, content );
+            JsonDocument inserted = bucket.replace(doc);
+            
+        } catch ( Exception e) {
+            e.printStackTrace();
+        }
         
     }
 
