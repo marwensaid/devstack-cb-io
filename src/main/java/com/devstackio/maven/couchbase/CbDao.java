@@ -98,7 +98,7 @@ public class CbDao extends CbConnectionManager implements IDao {
 
         try {
             prefix = entity.getPrefix();
-            System.out.println( "cbdao - create -- prefix is : " + prefix );
+            System.out.println( "cbdao - create -- prefix is : " + prefix + " entityBucket is : " + entity.getBucket() );
             System.out.println("bucket is : " + bucket );
 
             String entid = entity.getId();
@@ -202,7 +202,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             } else {
                 // doc found
                 System.out.println("  -- document exists already, updating entity --");
-                this.update(entity);
+                this.updateToSession(entity);
                 returnobj = entity.getId();
             }
 
@@ -235,9 +235,14 @@ public class CbDao extends CbConnectionManager implements IDao {
             JsonDocument jd = bucket.get(docId);
             entityJson = jd.content().toString();
             returnobj = (T) this.gson.fromJson(entityJson, t.getClass());
-
+            
+            System.out.println( "returning obj with json : " + entityJson );
+            
         } catch (NullPointerException e) {
+            
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
+            System.out.println("[NullPointer] caught in CbDao for docId : " + docId );
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -410,6 +415,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             System.out.println("CASMismatch caught on updating : " + docId );
             System.out.println("------------------------------------------");
         } catch (DocumentDoesNotExistException e) {
+            System.out.println( "[NullPointer] caught in CbDao update method on docId : " + docId );
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
         } catch (Exception e) {
             e.printStackTrace();
@@ -546,7 +552,7 @@ public class CbDao extends CbConnectionManager implements IDao {
      * @param prefix
      * @return 
      */
-    protected int getCounter( Bucket bucket, String prefix ) {
+    public int getCounter( Bucket bucket, String prefix ) {
         
         int returnobj = -1;
         Bucket cbBucket = bucket;
