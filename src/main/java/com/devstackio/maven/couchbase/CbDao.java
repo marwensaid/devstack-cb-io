@@ -561,25 +561,23 @@ public class CbDao extends CbConnectionManager implements IDao {
             
             System.out.println( "trying get on prefix : " + prefix );
             JsonDocument jsonDoc = cbBucket.get( prefix );
-            System.out.println("jsonDoc is : " + jsonDoc );
             
-            if( jsonDoc == null ) {
-                
-                JsonObject content = JsonObject.empty().put("value", 0);
-                JsonDocument doc = JsonDocument.create( prefix, content );
-                JsonDocument inserted = bucket.insert( doc );
-                returnobj = 0;
-                
-            } else {
-                int current = jsonDoc.content().getInt( "value" );
-                current+=1;
-                JsonObject content = JsonObject.empty().put("value", current);
-                JsonDocument doc = JsonDocument.create( prefix, content );
-                JsonDocument inserted = bucket.replace( doc );
-                returnobj = current;
-            }
+            int current = jsonDoc.content().getInt("value");
+            current += 1;
+            JsonObject content = JsonObject.empty().put("value", current);
+            JsonDocument doc = JsonDocument.create(prefix, content);
+            JsonDocument inserted = bucket.replace(doc);
+            returnobj = current;
             
-        } catch ( Exception e) {
+        } catch ( NullPointerException e ) {
+            
+            System.out.println("-- no counter for prefix : " + prefix + " found... setting and returning 0.");
+            JsonObject content = JsonObject.empty().put("value", 0);
+            JsonDocument doc = JsonDocument.create(prefix, content);
+            JsonDocument inserted = bucket.insert(doc);
+            returnobj = 0;
+            
+        } catch ( Exception e ) {
             e.printStackTrace();
         }
         
