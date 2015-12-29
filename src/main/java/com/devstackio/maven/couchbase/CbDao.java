@@ -282,15 +282,15 @@ public class CbDao extends CbConnectionManager implements IDao {
     }
     
     /**
-     * read a document id direct from a bucket
-     * @param id
+     * read a document id direct from a bucket using a Class to cast to
+     * @param docid
      * @param cbbucket
-     * @return DefaultEntity parsed from json string
+     * @return entityobj parsed from json string
      */
-    public DefaultEntity rawRead( String id, Bucket cbbucket ) {
+    public <T> T rawRead( String docid, Bucket cbbucket, T t ) {
         
-        DefaultEntity returnobj = new DefaultEntity();
-        String docId = id;
+        T returnobj = null;
+        String docId = docid;
         Bucket bucket = cbbucket;
         String entityJson = "";
         
@@ -298,7 +298,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             
             JsonDocument jd = bucket.get( docId );
             entityJson = jd.content().toString();
-            returnobj = (DefaultEntity) this.gson.fromJson( entityJson, DefaultEntity.class );
+            returnobj = (T) this.gson.fromJson( entityJson, t.getClass() );
             
         } catch (Exception e) {
             e.printStackTrace();
