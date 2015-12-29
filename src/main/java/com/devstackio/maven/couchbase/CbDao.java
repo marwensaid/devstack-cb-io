@@ -129,6 +129,34 @@ public class CbDao extends CbConnectionManager implements IDao {
     }
     
     /**
+     * updates counter for passed in entity, returns current (unused) value
+     * @param entity
+     * @return current counter of entity
+     */
+    public String updateCounter( DefaultEntity entity ) {
+        
+        String returnobj = "";
+        
+        try {
+            
+            String counterName = entity.getPrefix();
+            Bucket bucket = this.getBucket(this.bucketName);
+            returnobj = Integer.toString(this.getCounter( bucket, counterName ));
+
+            int newId = Integer.parseInt( returnobj ) + 1;
+            this.setCounter( bucket, counterName, newId );
+            
+            System.out.println("- updating counterName : " + counterName + " new value is : " + newId );
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return returnobj;
+        
+    }
+    
+    /**
      * uses AsyncBucket instead of regular bucket
      * @param entityobj
      * @return 

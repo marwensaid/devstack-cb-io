@@ -127,7 +127,7 @@ public class CbConnectionManager {
      * should be called from contextDestroyed [ ServletContextListener ]
      */
     public void destroyConnection(String bucketname) {
-        System.out.println("test0");
+        System.out.println("[[ CbConnectionManager : destroyConnection from bucket ["+bucketname+"]");
         try {
             //this.ioLogger.logTo(this.LOGFILE, Level.INFO, "destroyingConnection to : " + bucketname );
             if( this.getBuckets() == null ) {
