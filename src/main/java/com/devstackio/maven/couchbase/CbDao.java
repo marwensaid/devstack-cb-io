@@ -60,6 +60,10 @@ public class CbDao extends CbConnectionManager implements IDao {
     public void setUuidGenerator(UuidGenerator uuidgenerator) {
         this.uuidGenerator = uuidgenerator;
     }
+    
+    public void setBucketName( String bucketname ) {
+        this.bucketName = bucketname;
+    }
 
     /**
      * if needed outside web context
@@ -270,6 +274,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
             System.out.println("[NullPointer] caught in CbDao for docId : " + docId );
+            return null;
             
         } catch (Exception e) {
             e.printStackTrace();
