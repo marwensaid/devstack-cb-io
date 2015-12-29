@@ -6,7 +6,6 @@ import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.PersistTo;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.RawJsonDocument;
-import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.error.CASMismatchException;
 import com.couchbase.client.java.error.DocumentAlreadyExistsException;
@@ -23,7 +22,6 @@ import com.devstackio.maven.uuid.UuidGenerator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import org.apache.log4j.Level;
@@ -281,6 +279,33 @@ public class CbDao extends CbConnectionManager implements IDao {
         }
 
         return returnobj;
+    }
+    
+    /**
+     * read a document id direct from a bucket
+     * @param id
+     * @param cbbucket
+     * @return DefaultEntity parsed from json string
+     */
+    public DefaultEntity rawRead( String id, Bucket cbbucket ) {
+        
+        DefaultEntity returnobj = new DefaultEntity();
+        String docId = id;
+        Bucket bucket = cbbucket;
+        String entityJson = "";
+        
+        try {
+            
+            JsonDocument jd = bucket.get( docId );
+            entityJson = jd.content().toString();
+            returnobj = (DefaultEntity) this.gson.fromJson( entityJson, DefaultEntity.class );
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return returnobj;
+        
     }
     
     public <T> T convertFromJsonDocument( JsonDocument jd, T t ) {
