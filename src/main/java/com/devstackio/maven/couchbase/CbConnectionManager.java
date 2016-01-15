@@ -6,7 +6,6 @@ import com.couchbase.client.java.CouchbaseCluster;
 import com.devstackio.maven.logging.IoLogger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 /**
@@ -76,10 +75,21 @@ public class CbConnectionManager {
         this.initCluster(ips);
     }
 
-    private void initCluster(ArrayList<String> ips) {
+    protected void initCluster(ArrayList<String> ips) {
 
         try {
             cluster = CouchbaseCluster.create(ips);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void createConnectionWithBucket( String[] ips, String bucketname, String bucketpass ) {
+
+        try {
+            this.createConnection( ips );
+            this.addBucketToCluster( bucketname, bucketpass );
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,7 +124,7 @@ public class CbConnectionManager {
         Bucket returnobj = null;
 
         try {
-            //System.out.println("[ CbConnectionManager ] : getting bucketname : " + bucketname);
+            System.out.println("[ CbConnectionManager ] : getting bucketname : " + bucketname + " from list : " + this.getBuckets().toString() );
             returnobj = this.getBuckets().get(bucketname);
         } catch (Exception e) {
             e.printStackTrace();

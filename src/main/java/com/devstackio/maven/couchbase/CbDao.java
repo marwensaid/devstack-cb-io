@@ -76,7 +76,16 @@ public class CbDao extends CbConnectionManager implements IDao {
             appData.setMainCbBucket(bucket);
             appData.setMainCbPass(pass);
             this.setAppData(appData);
+            this.setBucketName( bucket );
             System.out.println("[CbDao initialized for standalone use]");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void initializeStandaloneWithCluster( String[] ips, String bucketname, String bucketpass ) {
+        try {
+            this.initializeStandalone( bucketname, bucketpass );
+            this.createConnectionWithBucket( ips, bucketname, bucketpass );
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -271,7 +280,7 @@ public class CbDao extends CbConnectionManager implements IDao {
         } catch (NullPointerException e) {
             
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
-            System.out.println("[NullPointer] caught in CbDao for docId : " + docId );
+            System.out.println("[NullPointer] caught in CbDao for docId [" + docId + "] -- entityBucket was [" + entity.getBucket() + "]" );
             return null;
             
         } catch (Exception e) {
@@ -299,6 +308,8 @@ public class CbDao extends CbConnectionManager implements IDao {
             JsonDocument jd = bucket.get( docId );
             entityJson = jd.content().toString();
             returnobj = (T) this.gson.fromJson( entityJson, t.getClass() );
+            
+            System.out.println("raw returning object with json : " + entityJson );
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -633,6 +644,8 @@ public class CbDao extends CbConnectionManager implements IDao {
         } catch ( NullPointerException e ) {
             
             System.out.println("-- no counter for prefix : " + prefix + " found... setting and returning 0.");
+            System.out.println("---- bucket is : " + bucket );
+            
             JsonObject content = JsonObject.empty().put("value", 0);
             JsonDocument doc = JsonDocument.create(prefix, content);
             JsonDocument inserted = bucket.insert(doc);

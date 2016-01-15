@@ -1,4 +1,4 @@
-package com.devstackio.maven.propertyloader;
+package com.devstackio.maven.loaders;
 
 import java.io.IOException;
 import java.io.InputStream;

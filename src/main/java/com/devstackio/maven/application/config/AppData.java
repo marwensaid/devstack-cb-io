@@ -1,6 +1,6 @@
 package com.devstackio.maven.application.config;
 
-import com.devstackio.maven.propertyloader.PropertyLoader;
+import com.devstackio.maven.loaders.PropertyLoader;
 import java.util.ArrayList;
 import java.util.Properties;
 import javax.annotation.PostConstruct;
