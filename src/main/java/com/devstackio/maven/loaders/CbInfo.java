@@ -10,6 +10,13 @@ public enum CbInfo {
     private ArrayList<String> couchbaseIps;
     private String mainCbBucket;
     private String mainCbPass;
+    
+    CbInfo() {
+        this.appName = "";
+        this.couchbaseIps = new ArrayList();
+        this.mainCbBucket = "";
+        this.mainCbPass = "";
+    }
 
     public String getAppName() {
         return appName;

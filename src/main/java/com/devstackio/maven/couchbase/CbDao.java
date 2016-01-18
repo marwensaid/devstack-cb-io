@@ -53,6 +53,10 @@ public class CbDao extends CbConnectionManager implements IDao {
     public void setIoLogger(IoLogger iologger) {
         this.ioLogger = iologger;
     }
+    
+    public IoLogger getIoLogger() {
+        return this.ioLogger;
+    }
 
     @Inject
     public void setUuidGenerator(UuidGenerator uuidgenerator) {
@@ -86,6 +90,21 @@ public class CbDao extends CbConnectionManager implements IDao {
         try {
             this.initializeStandalone( bucketname, bucketpass );
             this.createConnectionWithBucket( ips, bucketname, bucketpass );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void initializeStandaloneWithCluster( ArrayList<String> ips, String bucketname, String bucketpass ) {
+        try {
+            ArrayList<String> origIps = ips;
+            String[] ipList = new String[ origIps.size() ];
+            int counter = 0;
+            for ( String str : origIps ) {
+                ipList[ counter ] = str;
+                counter++;
+            }
+            this.initializeStandalone( bucketname, bucketpass );
+            this.createConnectionWithBucket( ipList, bucketname, bucketpass );
         } catch (Exception e) {
             e.printStackTrace();
         }

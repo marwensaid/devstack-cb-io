@@ -14,6 +14,12 @@ public enum ConfigLoader {
     private final String PARAM_MAIN_BUCKET_NAME = "dbn";
     private final String PARAM_MAIN_BUCKET_PASS = "dbp";
     
+    /**
+     * will load file specified and return CbInfo object
+     * @param file string of file name ( usually "config.properties" )
+     * @param path string of file path ( usually left blank "" and will look in src/main/resources )
+     * @return 
+     */
     public CbInfo loadConfig( String file, String path ) {
         
         Properties properties = new Properties();
