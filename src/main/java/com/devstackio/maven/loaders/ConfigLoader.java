@@ -15,14 +15,16 @@ public enum ConfigLoader {
     private final String PARAM_MAIN_BUCKET_PASS = "dbp";
     
     /**
-     * will load file specified and return CbInfo object
-     * @param file string of file name ( usually "config.properties" )
-     * @param path string of file path ( usually left blank "" and will look in src/main/resources )
+     * get param from properties obj : properties.getProperty( "propertyName" )
+     * properties file :
+     * propertyName=hello
+     * propertyNameTwo=nosemicol
+     * @param file ex: "config.properties"
+     * @param path ex: "" for scr/main/resources
      * @return 
      */
-    public CbInfo loadConfig( String file, String path ) {
-        
-        Properties properties = new Properties();
+    public Properties loadProperties( String file, String path ) {
+        Properties returnobj = new Properties();
         String fullPath = path + file;
 
         InputStream in = new InputStream() {
@@ -34,7 +36,8 @@ public enum ConfigLoader {
         };
         try {
             in = ClassLoader.getSystemResourceAsStream(fullPath);
-            properties.load(in);
+            System.out.println("--trying to load : " + fullPath);
+            returnobj.load(in);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -45,7 +48,17 @@ public enum ConfigLoader {
                 e.printStackTrace();
             }
         }
-        return this.setParams( properties );
+        return returnobj;
+    }
+    
+    /**
+     * will load file specified and return CbInfo object
+     * @param file string of file name ( usually "config.properties" )
+     * @param path string of file path ( usually left blank "" and will look in src/main/resources )
+     * @return 
+     */
+    public CbInfo loadConfig( String file, String path ) {
+        return this.setParams( this.loadProperties(file, path) );
     }
     
     private CbInfo setParams(Properties config) {

@@ -124,7 +124,7 @@ public class CbConnectionManager {
         Bucket returnobj = null;
 
         try {
-            System.out.println("[ CbConnectionManager ] : getting bucketname : " + bucketname + " from list : " + this.getBuckets().toString() );
+            //System.out.println("[ CbConnectionManager ] : getting bucketname : " + bucketname + " from list : " + this.getBuckets().toString() );
             returnobj = this.getBuckets().get(bucketname);
         } catch (Exception e) {
             e.printStackTrace();

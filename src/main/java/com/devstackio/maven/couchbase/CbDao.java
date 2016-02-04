@@ -128,27 +128,27 @@ public class CbDao extends CbConnectionManager implements IDao {
 
         try {
             prefix = entity.getPrefix();
-            System.out.println( "cbdao - create -- prefix is : " + prefix + " entityBucket is : " + entity.getBucket() );
-            System.out.println("bucket is : " + bucket );
+            //System.out.println( "cbdao - create -- prefix is : " + prefix + " entityBucket is : " + entity.getBucket() );
+            //System.out.println("bucket is : " + bucket );
 
             String entid = entity.getId();
-            System.out.println( "entid is : " + entid );
+            //System.out.println( "entid is : " + entid );
             
             if (entid == null || entid.isEmpty()) {
-                System.out.println("entid is null or empty... first chek");
+                //System.out.println("entid is null or empty... first chek");
                 String entityId = this.generateId(bucket, prefix);
-                System.out.println( "entid was null or empty ... new generated id is : " + entityId );
+                //System.out.println( "entid was null or empty ... new generated id is : " + entityId );
                 entity.setId(entityId);
             }
             
-            System.out.println("getDocId is : " + entity.getDocId() );
+            //System.out.println("getDocId is : " + entity.getDocId() );
             
             RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
-            System.out.println( "rawJason doc is : " + rJsonDoc );
+            //System.out.println( "rawJason doc is : " + rJsonDoc );
             returnobj = prefix + ":" + entity.getId();
-            System.out.println( "returnobj is : " + returnobj );
+            //System.out.println( "returnobj is : " + returnobj );
             
-            System.out.println( "bucket is : " + bucket );
+            //System.out.println( "bucket is : " + bucket );
             bucket.insert(rJsonDoc, PersistTo.MASTER);
             String logMsg = "-- tried upsert on : " + rJsonDoc + " --";
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
@@ -176,7 +176,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             int newId = Integer.parseInt( returnobj ) + 1;
             this.setCounter( bucket, counterName, newId );
             
-            System.out.println("- updating counterName : " + counterName + " new value is : " + newId );
+            //System.out.println("- updating counterName : " + counterName + " new value is : " + newId );
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -200,27 +200,27 @@ public class CbDao extends CbConnectionManager implements IDao {
 
         try {
             prefix = entity.getPrefix();
-            System.out.println( "cbdao - create -- prefix is : " + prefix );
-            System.out.println("bucket is : " + bucket );
+            //System.out.println( "cbdao - create -- prefix is : " + prefix );
+            //System.out.println("bucket is : " + bucket );
 
             String entid = entity.getId();
-            System.out.println( "entid is : " + entid );
+            //System.out.println( "entid is : " + entid );
             
             if (entid == null || entid.isEmpty()) {
-                System.out.println("entid is null or empty... first chek");
+                //System.out.println("entid is null or empty... first chek");
                 String entityId = this.generateId( this.getBucket(entity.getBucket()), prefix);
-                System.out.println( "entid was null or empty ... new generated id is : " + entityId );
+                //System.out.println( "entid was null or empty ... new generated id is : " + entityId );
                 entity.setId(entityId);
             }
             
-            System.out.println("getDocId is : " + entity.getDocId() );
+            //System.out.println("getDocId is : " + entity.getDocId() );
             
             RawJsonDocument rJsonDoc = this.convertToRawJsonDoc(entity.getDocId(), entity);
-            System.out.println( "rawJason doc is : " + rJsonDoc );
+            //System.out.println( "rawJason doc is : " + rJsonDoc );
             returnobj = prefix + ":" + entity.getId();
-            System.out.println( "returnobj is : " + returnobj );
+            //System.out.println( "returnobj is : " + returnobj );
             
-            System.out.println( "bucket is : " + bucket );
+            //System.out.println( "bucket is : " + bucket );
             bucket.insert(rJsonDoc, PersistTo.MASTER);
             String logMsg = "-- tried upsert on : " + rJsonDoc + " --";
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, logMsg);
@@ -250,16 +250,16 @@ public class CbDao extends CbConnectionManager implements IDao {
 
         try {
 
-            System.out.println("[ CbDao ] : createToSession : " + entity.getId() + " : from " + this.getClass().getCanonicalName());
+            //System.out.println("[ CbDao ] : createToSession : " + entity.getId() + " : from " + this.getClass().getCanonicalName());
             
             JsonDocument found = bucket.get( entity.getDocId() );
             if (found == null) {
                 // doc not found
-                System.out.println("  -- document does not exist, creating new entity --");
+                //System.out.println("  -- document does not exist, creating new entity --");
                 returnobj = this.create(entity);
             } else {
                 // doc found
-                System.out.println("  -- document exists already, updating entity --");
+                //System.out.println("  -- document exists already, updating entity --");
                 this.updateToSession(entity);
                 returnobj = entity.getId();
             }
@@ -294,7 +294,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             entityJson = jd.content().toString();
             returnobj = (T) this.gson.fromJson(entityJson, t.getClass());
             
-            System.out.println( "returning obj with json : " + entityJson );
+            //System.out.println( "returning obj with json : " + entityJson );
             
         } catch (NullPointerException e) {
             
@@ -328,7 +328,7 @@ public class CbDao extends CbConnectionManager implements IDao {
             entityJson = jd.content().toString();
             returnobj = (T) this.gson.fromJson( entityJson, t.getClass() );
             
-            System.out.println("raw returning object with json : " + entityJson );
+            //System.out.println("raw returning object with json : " + entityJson );
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -398,6 +398,8 @@ public class CbDao extends CbConnectionManager implements IDao {
             }
             
         } catch (Exception e) {
+            System.out.println("--getAll method CbDao base - bucket was : " + bucket );
+            System.out.println("-- docId was : " + entity.getDocId() );
             e.printStackTrace();
         }
         
@@ -506,6 +508,10 @@ public class CbDao extends CbConnectionManager implements IDao {
             System.out.println( "[NullPointer] caught in CbDao update method on docId : " + docId );
             this.ioLogger.logTo("DevStackIo-debug", Level.INFO, "document : " + docId + " not found in couchbase.");
         } catch (Exception e) {
+            System.out.println("[[ CbDao exeption caught during update method : " );
+            System.out.println("  -- bucket name was : " + entity.getBucket() );
+            System.out.println("  -- bucket was : " + bucket );
+            System.out.println("  -- docId was : " + entity.getDocId() );
             e.printStackTrace();
         }
 
@@ -647,7 +653,7 @@ public class CbDao extends CbConnectionManager implements IDao {
         
         try {
             
-            System.out.println( "[[ CbDao getCounter -- trying get on prefix : " + prefix );
+            //System.out.println( "[[ CbDao getCounter -- trying get on prefix : " + prefix );
             JsonDocument jsonDoc = cbBucket.get( prefix );
             
             returnobj = jsonDoc.content().getInt("value");
@@ -658,12 +664,12 @@ public class CbDao extends CbConnectionManager implements IDao {
 //            JsonDocument inserted = bucket.replace(doc);
 //            returnobj = current;
             
-            System.out.println("     -- returning : " + returnobj + " ]] " );
+            //System.out.println("     -- returning : " + returnobj + " ]] " );
             
         } catch ( NullPointerException e ) {
             
-            System.out.println("-- no counter for prefix : " + prefix + " found... setting and returning 0.");
-            System.out.println("---- bucket is : " + bucket );
+            //System.out.println("-- no counter for prefix : " + prefix + " found... setting and returning 0.");
+            //System.out.println("---- bucket is : " + bucket );
             
             JsonObject content = JsonObject.empty().put("value", 0);
             JsonDocument doc = JsonDocument.create(prefix, content);
@@ -685,9 +691,9 @@ public class CbDao extends CbConnectionManager implements IDao {
         
         try {
             
-            System.out.println( "--[ updating counter prefix : " + prefix + " to : " + value + " ]--" );
+            //System.out.println( "--[ updating counter prefix : " + prefix + " to : " + value + " ]--" );
             JsonDocument jsonDoc = cbBucket.get( prefix );
-            System.out.println("jsonDoc is : " + jsonDoc );
+            //System.out.println("jsonDoc is : " + jsonDoc );
             
             JsonObject content = JsonObject.empty().put( "value", newCounterValue );
             JsonDocument doc = JsonDocument.create( prefix, content );
@@ -767,6 +773,10 @@ public class CbDao extends CbConnectionManager implements IDao {
                 returnobj.add(row.document());
             }
         } catch (Exception e) {
+            System.out.println("getBulkData error --");
+            System.out.println("-- designDoc was : " + designDoc );
+            System.out.println("-- viewName was : " + viewName );
+            System.out.println("-- bucket was : " + bucket.name());
             e.printStackTrace();
         }
 
